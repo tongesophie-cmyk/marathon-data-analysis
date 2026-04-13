@@ -1,0 +1,41 @@
+-- Chicago Marathon 2026: Goal Execution Plan
+-- Target: 03:20:00 (Full Marathon)
+
+WITH Current_Baseline AS (
+    SELECT 
+        'Madrid Half Marathon' AS race,
+        '01:32:00'::INTERVAL AS finish_time,
+        21.0975 AS distance_km
+),
+Goal_Metrics AS (
+    SELECT 
+        'Chicago Marathon' AS goal_race,
+        '03:20:00'::INTERVAL AS target_time,
+        42.195 AS distance_km
+)
+SELECT 
+    g.goal_race,
+    g.target_time,
+    -- Calculate Required Pace per KM
+    TRUNC(EXTRACT(EPOCH FROM g.target_time) / g.distance_km / 60, 2) AS target_pace_per_km,
+    -- Calculate Required Pace per Mile
+    TRUNC(EXTRACT(EPOCH FROM g.target_time) / 26.2 / 60, 2) AS target_pace_per_mile,
+    -- Calculate "The Gap": Comparison to Madrid Half Marathon Pace
+    TRUNC((EXTRACT(EPOCH FROM b.finish_time) / b.distance_km / 60) - 
+          (EXTRACT(EPOCH FROM g.target_time) / g.distance_km / 60), 2) AS pace_variance_needed
+FROM Goal_Metrics g, Current_Baseline b;
+
+-- Training Block Benchmarks
+CREATE TABLE chicago_training_plan (
+    phase VARCHAR(50),
+    focus_area TEXT,
+    target_weekly_km INT,
+    key_workout TEXT
+);
+
+INSERT INTO chicago_training_plan (phase, focus_area, target_weekly_km, key_workout)
+VALUES 
+    ('Base Building', 'Aerobic Capacity', 50, '90 min Zone 2 Easy Run'),
+    ('Strength Phase', 'Lactate Threshold', 65, '5 x 2km at 04:30 min/km'),
+    ('Peak Week', 'Race Pace Specificity', 80, '32km Long Run with 15km at 04:44 min/km'),
+    ('Taper', 'Recovery & Sharpening', 30, '6km at Goal Marathon Pace');
